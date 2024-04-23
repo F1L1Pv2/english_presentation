@@ -105,35 +105,71 @@ function get_height(text="Hello text",size=60,align="center"){
     return totalLength
 }
 
-function write_multiline_text(text="Hello text", x=0, y=0, size=60, color="white",align="center"){
+function write_multiline_text(text="Hello text", x=0, y=0, size=60, color="white", align="center"){
     ctx.save();
 
     let p = size/10;
 
     ctx.font = `${size}px Arial`;
-    ctx.textAlign = align;
     ctx.fillStyle = color;
-    let metrics = ctx.measureText(text);
+    let metrics = ctx.measureText("M"); // dummy text to get font metrics
     let lineHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent + p;
 
-    let lines = text.split('\n');
+    let lines = text.split('\n');//.filter(line => line !== '');
 
     let totalLength = lineHeight * lines.length;
     let maxWidth = 0;
 
-    for (var i = 0; i<lines.length; i++){
-        let measure = ctx.measureText(lines[i]);
-        ctx.fillText(lines[i], x, y + (i*lineHeight) - totalLength/4);
-        let actualWidth = measure.actualBoundingBoxLeft + measure.actualBoundingBoxRight;
-        if (maxWidth < actualWidth){
-            maxWidth = actualWidth
+    for (var i = 0; i < lines.length; i++){
+        let line = lines[i];
+        let segments = [];
+        let lastIndex = 0;
+
+        let currentColor = color.slice();
+
+        // parse the line for color codes
+        let matches = line.match(/\{\[([^}]+)\]\}/g);
+        if (matches) {
+            for (let match of matches) {
+                let code = match.substring(2, match.length - 2);
+                let textBeforeCode = line.substring(lastIndex, line.indexOf(match));
+                segments.push({ text: textBeforeCode, color: currentColor.slice() });
+                currentColor = code;
+                lastIndex = line.indexOf(match) + match.length;
+            }
+            let remainingText = line.substring(lastIndex);
+            segments.push({ text: remainingText, color: currentColor.slice() });
+        } else {
+            segments.push({ text: line, color: currentColor.slice() });
+        }
+
+        let lineWidth = 0;
+        for (let segment of segments) {
+            let measure = ctx.measureText(segment.text);
+            lineWidth += measure.width;
+        }
+
+        let offsetX = 0;
+
+        if (align === "center"){
+            offsetX = -lineWidth /2
+        }else if(align === "right"){
+            offsetX = -lineWidth
+        }
+
+        for (let segment of segments) {
+            ctx.fillStyle = segment.color;
+            ctx.textAlign = "left"
+            ctx.fillText(segment.text, x + offsetX   , y + (i*lineHeight) - totalLength/4);
+            let measure = ctx.measureText(segment.text);
+            offsetX += measure.width;
+        }
+        if (maxWidth < lineWidth){
+            maxWidth = lineWidth
         }
     }
 
-
     ctx.restore();
-
-    // console.log(maxWidth)
 
     return [maxWidth, totalLength]
 }
@@ -149,8 +185,19 @@ function slide_0(){
     ctx.save();
 
     let p = canvas.width/30;
-    let [_, offset] = write_multiline_text("How I write Algorithms", canvas.width/2, canvas.height/2, p);
-    write_multiline_text("F1L1P Młodzik",canvas.width/2,canvas.height/2+offset, p/2)
+    let [_, offset] = write_multiline_text(`How I write Algorithms`, canvas.width/2, canvas.height/2, p);
+    write_multiline_text(`F1L1P Młodzik`,canvas.width/2,canvas.height/2+offset, p/2)
+
+    ctx.restore();
+}
+
+function slide_1(){
+    ctx.save();
+
+    let p = canvas.width/30;
+    write_headText("Why this title?", p);
+    let [_, offset] = write_multiline_text(`Why: \"How I write Algorithms\"`, canvas.width/2, canvas.height/2, p);
+    write_multiline_text("instead of: \"How to write Algorithms?\"", canvas.width/2, canvas.height/2+offset,p);
 
     ctx.restore();
 }
@@ -197,6 +244,78 @@ function niga_1(){
     ctx.restore()
 }
 
+const player_timers_initial = [parseInt(Math.random()*20)+1,parseInt(Math.random()*20)+1,parseInt(Math.random()*20)+1,parseInt(Math.random()*20)+1]
+var player_timers = [player_timers_initial[0],player_timers_initial[1],player_timers_initial[2],player_timers_initial[3]]
+var counts = [78, 105, 103, 97]
+var players_jumping = [false, false, false, false]
+const player_colors = [RED, GREEN, YELLOW, BLUE]
+var players_time = [0,0,0,0]
+
+
+function ease_out(x){
+    return 1 - (1 - x) * (1 - x)
+}
+
+const max_jump = 20
+
+function draw_player(x, y, i, size){
+    if (players_jumping[i] == true){
+        ctx.save()
+
+        if(player_timers[i] > max_jump){
+            players_jumping[i] = false;
+        }
+
+        ctx.fillStyle=player_colors[i];
+        ctx.fillRect(x-size/2, y, size, size)
+        
+        player_timers[i] += 1;
+
+        ctx.restore()
+    }
+}
+
+function niga_2(){
+    ctx.save()
+
+    let p = canvas.height/30;
+    let text_size = canvas.width/15;
+    let c = "white";
+
+    
+    // let counts = player_timers
+
+    write_headText("Meaning = Jump Counter", canvas.width/30)
+
+    let [_, offset] = write_multiline_text(`{[${player_colors[0]}]}${counts[0]} {[${player_colors[1]}]}${counts[1]} {[${player_colors[2]}]}${counts[2]} {[${player_colors[3]}]}${counts[3]}`, canvas.width/2, canvas.height/2+p*2, text_size);
+    write_multiline_text(`{[${player_colors[0]}]}player1 {[${player_colors[1]}]}player2 {[${player_colors[2]}]}player3 {[${player_colors[3]}]}player4`, canvas.width/2, canvas.height/2 + offset + p*2, text_size/2)
+
+
+    
+
+
+
+    for (let i = 0; i<4; i++){
+        if (t%20 == 0){
+            if (player_timers[i] <= 0){
+                if (!players_jumping[i]){
+                    players_jumping[i] = true
+                    player_timers[i] = 0
+                    counts[i] += 1;
+                }
+                player_timers[i] = player_timers_initial[i];
+            }
+            player_timers[i] -= 1;
+        }
+
+
+    }
+
+
+
+    ctx.restore()
+}
+
 function not_found(slide_num){
     ctx.save();
 
@@ -206,29 +325,50 @@ function not_found(slide_num){
     ctx.restore();
 }
 
+const slides = [slide_0, slide_1, niga_0, niga_1, niga_2];
+
 function draw(){
     ctx.canvas.width  = window.innerWidth;
     ctx.canvas.height = window.innerHeight;
     clear_background()
 
-    switch (slide){
-        case 0: {
-            slide_0()
-            break
-        }
-
-        case 1: {
-            niga_0();
-            break
-        }
-
-        case 2: {
-            niga_1();
-            break
-        }
-
-        default: not_found(slide);
+    if (slide >= slides.length){
+        not_found(slide)
+    }else{
+        slides[slide]()
     }
+
+    
+
+
+    // switch (slide){
+    //     case 0: {
+    //         slide_0()
+    //         break
+    //     }
+
+    //     case 1: {
+    //         slide_1();
+    //         break
+    //     }
+
+    //     case 2: {
+    //         niga_0();
+    //         break
+    //     }
+
+    //     case 3: {
+    //         niga_1();
+    //         break
+    //     }
+
+    //     case 4: {
+    //         niga_2();
+    //         break
+    //     }
+
+    //     default: not_found(slide);
+    // }
 
     t+=1;
 
