@@ -190,9 +190,9 @@ function promise_to_audience(){
     ctx.save();
 
     let p = canvas.width/15;
-    write_headText("Before Presentation",p*0.4,DARKBROWN)
+    write_headText("Before Presentation",p*0.4,BROWN)
     let [_,offset]=write_multiline_text("I have a request...", canvas.width/2+p/4, canvas.height/2,p,RED);
-    write_multiline_text("I would want somebody\nto record my presentation\nif thats possible", canvas.width/2, canvas.height/2+offset,p*0.6,DARKBROWN,)
+    write_multiline_text("I would like someone\nto record this, if thats possible", canvas.width/2, canvas.height/2+offset,p*0.6,BROWN,)
 
     ctx.restore();
 }
@@ -211,7 +211,7 @@ function slide_1(){
     ctx.save();
 
     let p = canvas.width/20;
-    write_headText(`Why I choose this {[${PINK}]}title?`, p,BEIGE);
+    write_headText(`Why I chose this {[${PINK}]}title?`, p,BEIGE);
     let [_, offset] = write_multiline_text(`       why:{[${RED}]}\ "How I write Algorithms\"\n\ninstead of: {[${YELLOW}]}\"How to write Algorithms?\"`, p*0.5, canvas.height/2, p, BEIGE, "left");
 
     ctx.restore();
@@ -228,7 +228,7 @@ function niga_0(){
 
     let offset1 = write_multiline_text(`78 105 103 97\n\nWhat do I Mean by Meaning?`, canvas.width/2, canvas.height/2,text_size,c, "center");
 
-    write_multiline_text(`Currently thoose numbers have no meaning {[${GOLD}]}Meaning = unknown`, canvas.width/2, canvas.height/2+offset1[1],text_size/4)
+    write_multiline_text(`Currently those numbers have no meaning {[${GOLD}]}Meaning = unknown`, canvas.width/2, canvas.height/2+offset1[1],text_size/4)
 
 
     ctx.restore()
@@ -247,7 +247,7 @@ function niga_1(){
     let pos = [78 + Math.sin(t*0.1)*10, 105 + Math.cos(t*0.1)*10]
     let size = [103 + Math.sin(t*0.1)*10, 97 + Math.sin(t*0.1)*20]
 
-    write_headText("Meaning = cordinates", canvas.width/30,GOLD)
+    write_headText("Meaning = coordinates", canvas.width/30,GOLD)
 
     let offset1 = write_multiline_text(`(${Math.round(pos[0])} ${Math.round(pos[1])})`, canvas.width/2, canvas.height/2,text_size,c1, "right")
     let offset2 = write_multiline_text(`(${Math.round(size[0])} ${Math.round(size[1])})`, canvas.width/2, canvas.height/2,text_size,c2,"left")
