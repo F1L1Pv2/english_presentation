@@ -58,9 +58,9 @@ function entry(){
 }
 
 function update_thingy(){
-    // let url = window.location.origin+window.location.pathname;
+    let url = window.location.origin+window.location.pathname;
 
-    // window.location=`?slide=${slide}`
+    window.location=`?slide=${slide}`
 
     t = 0
 }
@@ -261,7 +261,9 @@ function niga_1(){
     ctx.restore()
 }
 
-const player_timers_initial = [parseInt(Math.random()*20)+1,parseInt(Math.random()*20)+1,parseInt(Math.random()*20)+1,parseInt(Math.random()*20)+1]
+const MAX_WAIT_TIME = 15
+
+const player_timers_initial = [parseInt(Math.random()*MAX_WAIT_TIME)+1,parseInt(Math.random()*MAX_WAIT_TIME)+1,parseInt(Math.random()*MAX_WAIT_TIME)+1,parseInt(Math.random()*MAX_WAIT_TIME)+1]
 var player_timers = [player_timers_initial[0],player_timers_initial[1],player_timers_initial[2],player_timers_initial[3]]
 var counts = [78, 105, 103, 97]
 var players_jumping = [false, false, false, false]
@@ -327,7 +329,7 @@ function niga_2(){
 
 
     for (let i = 0; i<4; i++){
-        if (t%20 == 0){
+        if (t%MAX_WAIT_TIME == 0){
             if (player_timers[i] <= 0){
                 console.log(players_jumping[i])
                 if (!players_jumping[i]){
@@ -358,7 +360,8 @@ function niga_pre_final(){
 
     write_headText("Meaning = Text", text_size/2,GOLD);
 
-    let offset1 = write_multiline_text(`78 105 103 97`, p, p+text_size/3,text_size/3,c, "left")
+    let [_,offset] = write_multiline_text(`78 105 103 97`, canvas.width-p*1, canvas.height/2,text_size/1.1,c, "right")
+    write_multiline_text("try to decode it ;)", canvas.width-p*6.5, canvas.height/2-text_size,text_size/3,c, "right")
 
     ctx.drawImage(TEST_IMG, canvas.width/2-TEST_IMG.width/2, canvas.height/2-TEST_IMG.height/2);
 
@@ -398,7 +401,7 @@ function niga_pre_final(){
  31  US  (unit separator)            63  ?         95  _        127  DEL`;
 
 
-    write_multiline_text(ascii_table, canvas.width/2-p*18, canvas.height/2-p*5, p, BEIGE, "left")
+    write_multiline_text(ascii_table, p, p*11, p, BEIGE, "left")
 
     ctx.restore()
 }
@@ -471,7 +474,7 @@ function part2(){
     ctx.restore();
 }
 
-const slides = [promise_to_audience, slide_0, slide_1, meaning_introduction, niga_0, niga_1, niga_2, niga_pre_final, niga_final, meaning_conclusion, part2];
+const slides = [promise_to_audience, slide_0, slide_1, meaning_introduction, niga_0, niga_1, niga_2, niga_pre_final, meaning_conclusion, part2];
 
 function draw(){
     ctx.canvas.width  = window.innerWidth;
