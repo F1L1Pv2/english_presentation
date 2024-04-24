@@ -44,23 +44,50 @@ const BLANK =      "rgb(0, 0, 0, 0)"           // Blank (Transparent)
 const MAGENTA =    "rgb(255, 0, 255, 255)"     // Magenta
 const RAYWHITE =   "rgb(245, 245, 245, 255)"   // My own White (raylib logo)
 
-const TEST_IMG = new Image();
+const Initial = new Image();
+const OnlyRotate = new Image();
+const Final = new Image();
+const FunctionIntro = new Image();
+const Function2 = new Image();
+const Function3 = new Image();
+
+const RotatePoint = new Image();
+const RotatePointFull = new Image();
+const OffsetPos = new Image();
+const OffsetPosFinal = new Image();
 
 
 function entry(){
     document.body.appendChild(canvas);
     
+    Initial.src="Initial.svg"
+    Final.src="Final.svg"
+    OnlyRotate.src="OnlyRotate.svg";
+    FunctionIntro.src="FunctionIntro.svg";
+    Function2.src="Function2.svg";
+    Function3.src="Function3.svg"
+
+    RotatePoint.src = "RotatePoint.svg";
+    RotatePointFull.src = "RotatePointFull.svg";
+    OffsetPos.src = "OffsetPos.svg";
+    OffsetPosFinal.src = "OffsetPosFinal.svg";
 
     addEventListener("keydown", keydown)
-    
+
     requestAnimationFrame(draw)
 
 }
 
 function update_thingy(){
-    let url = window.location.origin+window.location.pathname;
 
-    window.location=`?slide=${slide}`
+    if($_GET["debug"]){
+        if($_GET["debug"] = "true"){
+            let url = window.location.origin+window.location.pathname;
+        
+            window.location=`?debug=true&slide=${slide}`
+        }
+    }
+
 
     t = 0
 }
@@ -74,8 +101,7 @@ function keydown(event){
             break;
         }
         case "ArrowRight": {
-            slide+=1;
-            update_thingy();
+            if(slide < slides.length-1){slide+=1; update_thingy();}
             break;
         }
         default:
@@ -94,12 +120,10 @@ function clear_background(){
 function get_height(text="Hello text",size=60,align="center"){
     ctx.save();
 
-    let p = size/10;
-
     ctx.font = `${size}px Ubuntu Mono`;
     ctx.textAlign = align;
     let metrics = ctx.measureText(text);
-    let lineHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent + p;
+    let lineHeight = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
 
     let lines = text.split('\n');
 
@@ -113,12 +137,12 @@ function get_height(text="Hello text",size=60,align="center"){
 function write_multiline_text(text="Hello text", x=0, y=0, size=60, color="white", align="center"){
     ctx.save();
 
-    let p = size/10;
+    let p = size/1*0;
 
     ctx.font = `${size}px Ubuntu Mono`;
     ctx.fillStyle = color;
     let metrics = ctx.measureText("M"); // dummy text to get font metrics
-    let lineHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent + p;
+    let lineHeight = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent + p;
 
     let lines = text.split('\n');//.filter(line => line !== '');
 
@@ -132,20 +156,22 @@ function write_multiline_text(text="Hello text", x=0, y=0, size=60, color="white
 
         let currentColor = color.slice();
 
-        // parse the line for color codes
-        let matches = line.match(/\{\[([^}]+)\]\}/g);
-        if (matches) {
-            for (let match of matches) {
-                let code = match.substring(2, match.length - 2);
-                let textBeforeCode = line.substring(lastIndex, line.indexOf(match));
-                segments.push({ text: textBeforeCode, color: currentColor.slice() });
-                currentColor = code;
-                lastIndex = line.indexOf(match) + match.length;
-            }
-            let remainingText = line.substring(lastIndex);
-            segments.push({ text: remainingText, color: currentColor.slice() });
-        } else {
-            segments.push({ text: line, color: currentColor.slice() });
+        let regex = /\{\[([^}]+)\]\}/g;
+        let match;
+        while ((match = regex.exec(line)) !== null) {
+          let code = match[1];
+          if (code == "reset") {
+            code = color.slice();
+          }
+          let textBeforeCode = line.substring(lastIndex, match.index);
+          segments.push({ text: textBeforeCode, color: currentColor.slice() });
+          currentColor = code;
+          lastIndex = match.index + match[0].length;
+        }
+
+        let remainingText = line.substring(lastIndex);
+        if (remainingText) {
+          segments.push({ text: remainingText, color: currentColor.slice() });
         }
 
         let lineWidth = 0;
@@ -165,7 +191,7 @@ function write_multiline_text(text="Hello text", x=0, y=0, size=60, color="white
         for (let segment of segments) {
             ctx.fillStyle = segment.color;
             ctx.textAlign = "left"
-            ctx.fillText(segment.text, x + offsetX   , y + (i*lineHeight) - totalLength/4);
+            ctx.fillText(segment.text, x + offsetX   , y + (i*lineHeight) - totalLength/2);
             let measure = ctx.measureText(segment.text);
             offsetX += measure.width;
         }
@@ -181,9 +207,8 @@ function write_multiline_text(text="Hello text", x=0, y=0, size=60, color="white
 
 
 function write_headText(text, text_size, color="white"){
-    let p = canvas.height/30;
     let y = get_height(text,text_size)
-    write_multiline_text(text, canvas.width/2, y+p,text_size,color, "center")
+    write_multiline_text(text, canvas.width/2, y+text_size/2,text_size,color, "center")
 }
 
 function promise_to_audience(){
@@ -223,8 +248,6 @@ function niga_0(){
     let p = canvas.height/30;
     let text_size = canvas.width/15;
     let c = BEIGE;
-
-    // write_headText("Meaning = unknown", text_size/2,GOLD);
 
     let offset1 = write_multiline_text(`78 105 103 97\n\nWhat do I Mean by Meaning?`, canvas.width/2, canvas.height/2,text_size,c, "center");
 
@@ -317,8 +340,8 @@ function niga_2(){
 
     write_headText("Meaning = Jump Counter", canvas.width/30, GOLD)
 
-    let [offset_x, offset] = write_multiline_text(`{[${player_colors[0]}]}${counts[0]} {[${player_colors[1]}]}${counts[1]} {[${player_colors[2]}]}${counts[2]} {[${player_colors[3]}]}${counts[3]}`, canvas.width/2, canvas.height/2+p*2, text_size);
-    write_multiline_text(`{[${player_colors[0]}]}player1 {[${player_colors[1]}]}player2 {[${player_colors[2]}]}player3 {[${player_colors[3]}]}player4`, canvas.width/2, canvas.height/2 + offset + p*2, text_size/2)
+    let [offset_x, offset] = write_multiline_text(`{[${player_colors[0]}]}${counts[0]} {[${player_colors[1]}]}${counts[1]} {[${player_colors[2]}]}${counts[2]} {[${player_colors[3]}]}${counts[3]}`, canvas.width/2, canvas.height/2+text_size/1.5, text_size);
+    write_multiline_text(`{[${player_colors[0]}]}player1 {[${player_colors[1]}]}player2 {[${player_colors[2]}]}player3 {[${player_colors[3]}]}player4`, canvas.width/2, canvas.height/2 + offset, text_size/2)
 
     draw_player(canvas.width/2-offset_x/4 - text_size,canvas.height/2-text_size*1.5,0,text_size)
     draw_player(canvas.width/2-offset_x/4 + text_size/1.5,canvas.height/2-text_size*1.5,1,text_size)
@@ -360,48 +383,24 @@ function niga_pre_final(){
 
     write_headText("Meaning = Text", text_size/2,GOLD);
 
-    let [_,offset] = write_multiline_text(`78 105 103 97`, canvas.width-p*1, canvas.height/2,text_size/1.1,c, "right")
-    write_multiline_text("try to decode it ;)", canvas.width-p*6.5, canvas.height/2-text_size,text_size/3,c, "right")
+    let [_,offset] = write_multiline_text(`78 105 103 97`, canvas.width/2, canvas.height/2+text_size*3,text_size/1.1,c, "center")
+    write_multiline_text("try to decode it ;)", canvas.width/2, canvas.height/2+text_size*2,text_size/3,c, "center")
 
-    ctx.drawImage(TEST_IMG, canvas.width/2-TEST_IMG.width/2, canvas.height/2-TEST_IMG.height/2);
+    let ascii_table = `----------------------------------------------------------------
+|65  A | 66  B | 67  C | 68  D | 69  E | 70  F | 71  G | 72  H |
+|73  I | 74  J | 75  K | 76  L | 77  M | 78  N | 79  O | 80  P |
+|81  Q | 82  R | 83  S | 84  T | 85  U | 86  V | 87  W | 88  X |
+|89  Y | 90  Z | 97  a | 98  b | 99  c | 100 d | 101 e | 102 f |
+|103 g | 104 h | 105 i | 106 j | 107 k | 108 l | 109 m | 110 n |
+|111 o | 112 p | 113 q | 114 r | 115 s | 116 t | 117 u | 118 v |
+|119 w | 120 x | 121 y | 122 z |       |       |       |       |
+----------------------------------------------------------------`;
 
-    let ascii_table = `Dec  Char                           Dec  Char     Dec  Char     Dec  Char
----------                           ---------     ---------     ----------
-  0  NUL (null)                      32  SPACE     64  @         96  \`
-  1  SOH (start of heading)          33  !         65  A         97  a
-  2  STX (start of text)             34  "         66  B         98  b
-  3  ETX (end of text)               35  #         67  C         99  c
-  4  EOT (end of transmission)       36  $         68  D        100  d
-  5  ENQ (enquiry)                   37  %         69  E        101  e
-  6  ACK (acknowledge)               38  &         70  F        102  f
-  7  BEL (bell)                      39  '         71  G        103  g
-  8  BS  (backspace)                 40  (         72  H        104  h
-  9  TAB (horizontal tab)            41  )         73  I        105  i
- 10  LF  (NL line feed, new line)    42  *         74  J        106  j
- 11  VT  (vertical tab)              43  +         75  K        107  k
- 12  FF  (NP form feed, new page)    44  ,         76  L        108  l
- 13  CR  (carriage return)           45  -         77  M        109  m
- 14  SO  (shift out)                 46  .         78  N        110  n
- 15  SI  (shift in)                  47  /         79  O        111  o
- 16  DLE (data link escape)          48  0         80  P        112  p
- 17  DC1 (device control 1)          49  1         81  Q        113  q
- 18  DC2 (device control 2)          50  2         82  R        114  r
- 19  DC3 (device control 3)          51  3         83  S        115  s
- 20  DC4 (device control 4)          52  4         84  T        116  t
- 21  NAK (negative acknowledge)      53  5         85  U        117  u
- 22  SYN (synchronous idle)          54  6         86  V        118  v
- 23  ETB (end of trans. block)       55  7         87  W        119  w
- 24  CAN (cancel)                    56  8         88  X        120  x
- 25  EM  (end of medium)             57  9         89  Y        121  y
- 26  SUB (substitute)                58  :         90  Z        122  z
- 27  ESC (escape)                    59  ;         91  [        123  {
- 28  FS  (file separator)            60  <         92  \\        124  |
- 29  GS  (group separator)           61  =         93  ]        125  }
- 30  RS  (record separator)          62  >         94  ^        126  ~
- 31  US  (unit separator)            63  ?         95  _        127  DEL`;
+    // let [_2, offset2] = write_multiline_text("Ascii Table:", canvas.width/2, canvas.height/2-text_size*2, text_size/1.5, BEIGE);
 
+    let [_2, offset2] = write_multiline_text("Ascii Table:", canvas.width/2, canvas.height/2-text_size*2, text_size/1.5, BEIGE);
 
-    write_multiline_text(ascii_table, p, p*11, p, BEIGE, "left")
+    write_multiline_text(ascii_table, canvas.width/2, canvas.height/2, text_size/2.5, BEIGE, "center")
 
     ctx.restore()
 }
@@ -445,7 +444,7 @@ function meaning_conclusion(){
 
     write_headText("Meaning Conclusion", text_size, GOLD)
 
-    write_multiline_text("Numbers / Data\nby themselves\ndont have a meaning.\nWe as humans\nattach it to them.", canvas.width/2-p*12, canvas.height/2, text_size/1.5, BEIGE, "left")
+    write_multiline_text("Numbers / Data\nby themselves\ndont have a meaning.\nWe as humans\nattach it to them.", canvas.width/2-p*12, canvas.height/2+text_size, text_size/1.5, BEIGE, "left")
 
 
     ctx.restore()
@@ -460,7 +459,7 @@ function not_found(slide_num){
     ctx.restore();
 }
 
-function part2(){
+function introduction(){
     ctx.save();
     
     let p = canvas.height / 30;
@@ -474,7 +473,416 @@ function part2(){
     ctx.restore();
 }
 
-const slides = [promise_to_audience, slide_0, slide_1, meaning_introduction, niga_0, niga_1, niga_2, niga_pre_final, meaning_conclusion, part2];
+function conclusion(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    write_headText("Conclusion", text_size, GOLD)
+
+    write_multiline_text("By abstracting you are able\nto focus more on what to do and\nwhat boxes need to be created", canvas.width/2, canvas.height/2+text_size, text_size/1.5, BEIGE, "center")
+
+
+    ctx.restore()
+}
+
+function function_intro(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    draw_image(FunctionIntro, canvas.width/2 + p*1.95, canvas.height/2, p*20, true);
+
+    write_headText("How to convert Meaning\ninto another one?", text_size/2.5, BEIGE);
+
+    ctx.restore();
+}
+
+function function_1(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    draw_image(Function2, canvas.width/2, canvas.height/2, p*20, true);
+
+    write_headText("How to convert Meaning\ninto another one?", text_size/2.5, BEIGE)
+
+    ctx.restore();
+}
+
+function function_2(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    draw_image(Function3, canvas.width/2, canvas.height/2, p*20, true);
+
+    write_headText("How to convert Meaning\ninto another one?", text_size/2.5, BEIGE)
+
+    ctx.restore();
+}
+
+function endf(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    write_multiline_text("Thanks for listening", canvas.width/2, canvas.height/2+text_size/2, text_size/1.5, BEIGE, "center")
+
+
+    ctx.restore()
+}
+
+function draw_image(img, x, y, size, by_height = false){
+
+    let width = size;
+    let height = size * img.height / img.width;
+    if(!by_height){
+        let width = size;
+        let height = size * img.height / img.width;
+    }else{
+        width = size * img.width / img.height;
+        height = size;
+    }
+    ctx.drawImage(img, 0,0, img.width, img.height, x - width / 2 ,y - height / 2,width,height)
+
+
+}
+
+function draw_circle(x,y, radius){
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fill();
+    // ctx.stroke();
+    ctx.restore();
+}
+
+function draw_line(x, y, x1, y1){
+    ctx.save()
+
+    ctx.beginPath(); // Start a new path
+    ctx.moveTo(x, y); // Move the pen to (30, 50)
+    ctx.lineTo(x1, y1); // Draw a line to (150, 100)
+    ctx.stroke(); // Render the path
+
+    ctx.restore()
+}
+
+function point_between(x, y, x1, y1){
+    return [(x+x1)/2, (y+y1)/2]
+}
+
+
+let distance_pos = [0,0];
+let player_pos1 = [0,0];
+let particle_pos = [0,0];
+function desired_output(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    write_headText("Desired Output", text_size, BEIGE)
+
+    // write_multiline_text(`Time: ${t}`, text_size/10, canvas.height-text_size/10, text_size/2, BROWN, "left")
+    
+    let player_pos = [ text_size/2*Math.cos(t*0.04), text_size/2*Math.cos(t*0.02)]
+    let distance = text_size*2.5;
+    
+    write_multiline_text(`Player   (${Math.floor(player_pos[0])},${Math.floor(player_pos[1])})
+Particle (${Math.floor(distance*Math.cos(t*0.025) + player_pos[0])},${Math.floor(distance*Math.sin(t*0.025) + player_pos[1])})
+Distance: ${Math.floor(distance)}
+Time: ${t}`, 
+    text_size/2, canvas.height/2, text_size/3, DARKBROWN, "left");
+
+
+    ctx.fillStyle = PINK;
+
+    ctx.fillRect(canvas.width/2 - text_size/2 + player_pos[0], canvas.height/2 - text_size/2 + player_pos[1], text_size, text_size);
+
+    
+    ctx.fillStyle = GOLD;
+    
+    draw_circle(canvas.width/2 + distance*Math.cos(t*0.025) + player_pos[0], canvas.height/2+distance*Math.sin(t*0.025) + player_pos[1], text_size/5)
+    
+    
+    ctx.strokeStyle = RED;
+    ctx.lineWidth = text_size/20;
+    draw_line(canvas.width/2 + player_pos[0], canvas.height/2 + player_pos[1], canvas.width/2 + distance*Math.cos(t*0.025) + player_pos[0], canvas.height/2+distance*Math.sin(t*0.025) + player_pos[1])
+    
+    player_pos1 =  [canvas.width/2 + player_pos[0], canvas.height/2 + player_pos[1], canvas.width/2 + distance*Math.cos(t*0.025) + player_pos[0]]
+    particle_pos = [canvas.width/2 + distance*Math.cos(t*0.025) + player_pos[0], canvas.height/2+distance*Math.sin(t*0.025) + player_pos[1]]
+
+    distance_pos = [(player_pos[0] + particle_pos[0]) /2 + canvas.width/4, (player_pos[1] + particle_pos[1])/2 + canvas.height/4]
+
+    write_multiline_text("Distance", distance_pos[0], distance_pos[1], text_size/2)
+
+    write_multiline_text("(PlayerX, PlayerY)", canvas.width/2 - text_size/2 + player_pos[0] + text_size/3 *1.5, canvas.height/2 - text_size/2 + player_pos[1], text_size/2)
+    write_multiline_text("(ParticleX, ParticleY)", canvas.width/2 + distance*Math.cos(t*0.025) + player_pos[0], canvas.height/2+distance*Math.sin(t*0.025) + player_pos[1] - text_size/3 / 2, text_size/2)
+
+    ctx.restore()
+}
+
+function simple_algorithm_initial(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    draw_image(Initial, canvas.width/2, canvas.height/2, p*14)
+
+    ctx.restore();
+}
+
+function simple_algorithm_only_rotate(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    draw_image(OnlyRotate, canvas.width/2, canvas.height/2, p*14)
+
+    ctx.restore();
+}
+
+function RotatePoint_Initial(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    draw_image(RotatePoint, canvas.width/2, canvas.height/2, p*14);
+
+    write_multiline_text("Desired Output: ", text_size/2, text_size, text_size/2, BEIGE, "left");
+
+    let offset = [text_size/2,canvas.height/2];
+
+    let size = text_size*2;
+
+    ctx.save()
+    ctx.lineWidth = 4
+    ctx.strokeStyle = BROWN;
+    ctx.setLineDash([10,10])
+    draw_line(offset[0]+size,offset[1]-size, offset[0]+size,offset[1]+size)
+    ctx.strokeStyle = BEIGE;
+    draw_line(offset[0],offset[1], offset[0]+size*2,offset[1])
+    ctx.restore()
+
+    let middle = [offset[0]+size, offset[1]];
+    ctx.lineWidth = 4
+    
+    let distance = text_size*2
+    
+    let x_pos = [(middle[0]+middle[0]+distance*Math.cos(t*0.02))/2,(middle[1]+distance*Math.sin(t*0.02)+middle[1]+distance*Math.sin(t*0.02))/2,]
+    let y_pos = [(middle[0]+distance*Math.cos(t*0.02)+middle[0]+distance*Math.cos(t*0.02))/2,(middle[1]+middle[1]+distance*Math.sin(t*0.02))/2]
+
+    ctx.save();
+    ctx.setLineDash([10,10])
+    ctx.strokeStyle = GREEN;
+    ctx.strokeStyle = GREEN;
+    draw_line(middle[0]+distance*Math.cos(t*0.02),middle[1],middle[0]+distance*Math.cos(t*0.02),middle[1]+distance*Math.sin(t*0.02))
+    write_multiline_text("Y",y_pos[0],y_pos[1],text_size/2)
+
+    ctx.strokeStyle = RED;
+    ctx.fillStyle = RED;
+    draw_line(middle[0],middle[1]+distance*Math.sin(t*0.02),middle[0]+distance*Math.cos(t*0.02),middle[1]+distance*Math.sin(t*0.02))
+    write_multiline_text("X",x_pos[0],x_pos[1]+text_size/1.5,text_size/2)
+    
+    ctx.restore()
+
+    ctx.strokeStyle = BLUE;
+    draw_line(middle[0],middle[1],middle[0]+distance*Math.cos(t*0.02),middle[1]+distance*Math.sin(t*0.02))
+
+
+    ctx.restore();
+}
+
+function RotatePoint_Final(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    draw_image(RotatePointFull, canvas.width/2, canvas.height/2, p*14)
+
+    write_multiline_text("Desired Output: ", text_size/2, text_size, text_size/2, BEIGE, "left");
+
+    let offset = [text_size/2,canvas.height/2];
+
+    let size = text_size*2;
+
+    ctx.save()
+    ctx.lineWidth = 4
+    ctx.strokeStyle = BROWN;
+    ctx.setLineDash([10,10])
+    draw_line(offset[0]+size,offset[1]-size, offset[0]+size,offset[1]+size)
+    ctx.strokeStyle = BEIGE;
+    draw_line(offset[0],offset[1], offset[0]+size*2,offset[1])
+    ctx.restore()
+
+    let middle = [offset[0]+size, offset[1]];
+    ctx.lineWidth = 4
+    
+    let distance = text_size*2
+    
+    let x_pos = [(middle[0]+middle[0]+distance*Math.cos(t*0.02))/2,(middle[1]+distance*Math.sin(t*0.02)+middle[1]+distance*Math.sin(t*0.02))/2,]
+    let y_pos = [(middle[0]+distance*Math.cos(t*0.02)+middle[0]+distance*Math.cos(t*0.02))/2,(middle[1]+middle[1]+distance*Math.sin(t*0.02))/2]
+
+    ctx.save();
+    ctx.setLineDash([10,10])
+    ctx.strokeStyle = GREEN;
+    ctx.strokeStyle = GREEN;
+    draw_line(middle[0]+distance*Math.cos(t*0.02),middle[1],middle[0]+distance*Math.cos(t*0.02),middle[1]+distance*Math.sin(t*0.02))
+    write_multiline_text("Y",y_pos[0],y_pos[1],text_size/2)
+
+    ctx.strokeStyle = RED;
+    ctx.fillStyle = RED;
+    draw_line(middle[0],middle[1]+distance*Math.sin(t*0.02),middle[0]+distance*Math.cos(t*0.02),middle[1]+distance*Math.sin(t*0.02))
+    write_multiline_text("X",x_pos[0],x_pos[1]+text_size/1.5,text_size/2)
+    
+    ctx.restore()
+
+    ctx.strokeStyle = BLUE;
+    draw_line(middle[0],middle[1],middle[0]+distance*Math.cos(t*0.02),middle[1]+distance*Math.sin(t*0.02))
+
+    
+    let algorithm = `
+    {[${GOLD}]}function{[reset]} {[${BLUE}]}rotate_point{[reset]} ({[${GREEN}]}angle, distance{[reset]})
+    {[${RED}]}{
+        {[${PURPLE}]}let {[${GREEN}]}x{[reset]} = {[${BLUE}]}cos{[reset]}({[${GREEN}]}angle{[reset]}) * {[${GREEN}]}distance{[reset]};
+        {[${PURPLE}]}let {[${GREEN}]}y{[reset]} = {[${BLUE}]}sin{[reset]}({[${GREEN}]}angle{[reset]}) * {[${GREEN}]}distance{[reset]};
+
+        {[${PURPLE}]}return{[reset]} [{[${GREEN}]}x, y{[reset]}];
+    {[${RED}]}}
+`;
+
+    write_multiline_text(algorithm, canvas.width - text_size*6, canvas.height/2, text_size/4, WHITE, "left")
+
+    ctx.restore();
+}
+
+function OffsetPos_Initial(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    draw_image(OffsetPos, canvas.width/2, canvas.height/2, p*14);
+
+    ctx.restore();
+}
+
+
+function OffsetPos_Final(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    draw_image(OffsetPosFinal, canvas.width/2, canvas.height/2, p*14);
+
+    let algorithm = `
+    {[${GOLD}]}function{[reset]} {[${BLUE}]}offset_pos{[reset]}({[${GREEN}]}x1, y1, x2, y2{[reset]})
+    {[${RED}]}{
+        {[${PURPLE}]}let {[${GREEN}]}x{[reset]} = {[${GREEN}]}x1 {[reset]}+ {[${GREEN}]}x2{[reset]};
+        {[${PURPLE}]}let {[${GREEN}]}y{[reset]} = {[${GREEN}]}y1 {[reset]}+ {[${GREEN}]}y2{[reset]};
+        
+        {[${PURPLE}]}return{[reset]} [{[${GREEN}]}x, y{[reset]}];
+    {[${RED}]}}
+`;
+
+    write_multiline_text(algorithm, canvas.width - text_size*6, canvas.height/2, text_size/4, WHITE, "left")
+
+    ctx.restore();
+}
+
+function simple_algorithm_ready(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    draw_image(Final, canvas.width/2, canvas.height/2, p*14)
+
+    ctx.restore();
+}
+
+function simple_algorithm_main_func(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    let algorithm = `
+    {[${GOLD}]}function{[reset]} {[${BLUE}]}particle_pos{[reset]}({[${GREEN}]}player_x, player_y, time, distance{[reset]})
+    {[${RED}]}{
+        {[${PURPLE}]}let{[reset]} [{[${GREEN}]}rotated_x, rotated_y{[reset]}] = {[${BLUE}]}rotate_point{[reset]}({[${GREEN}]}time, ditance{[reset]});
+
+        {[${PURPLE}]}let{[reset]} [{[${GREEN}]}offseted_x, offseted_y{[reset]}] = {[${BLUE}]}offset_pos{[reset]}({[${GREEN}]}player_x, player_y, rotated_x, rotated_y{[reset]});
+        
+        {[${PURPLE}]}return{[reset]} [{[${GREEN}]}offseted_x, offseted_y{[reset]}];
+    {[${RED}]}}
+`;
+
+    write_multiline_text(algorithm, text_size  *1.5, canvas.height - text_size, text_size/4, WHITE, "left")
+
+    draw_image(Initial, canvas.width/2, canvas.height/2 - text_size * 1.3, text_size*2.5);
+
+    ctx.restore()
+}
+
+
+function simple_algorithm_final(){
+    ctx.save()
+
+    let p = canvas.height / 30;
+    let text_size = canvas.width / 15;
+
+    let algorithm = `
+    {[${GOLD}]}function{[reset]} {[${BLUE}]}particle_pos{[reset]}({[${GREEN}]}player_x, player_y, time, distance{[reset]})
+    {[${RED}]}{
+        {[${PURPLE}]}let{[reset]} [{[${GREEN}]}rotated_x, rotated_y{[reset]}] = {[${BLUE}]}rotate_point{[reset]}({[${GREEN}]}time, ditance{[reset]});
+
+        {[${PURPLE}]}let{[reset]} [{[${GREEN}]}offseted_x, offseted_y{[reset]}] = {[${BLUE}]}offset_pos{[reset]}({[${GREEN}]}player_x, player_y, rotated_x, rotated_y{[reset]});
+        
+        {[${PURPLE}]}return{[reset]} [{[${GREEN}]}offseted_x, offseted_y{[reset]}];
+    {[${RED}]}}
+
+    {[${GOLD}]}function{[reset]} {[${BLUE}]}rotate_point{[reset]} ({[${GREEN}]}angle, distance{[reset]})
+    {[${RED}]}{
+        {[${PURPLE}]}let {[${GREEN}]}x{[reset]} = {[${BLUE}]}cos{[reset]}({[${GREEN}]}angle{[reset]}) * {[${GREEN}]}distance{[reset]};
+        {[${PURPLE}]}let {[${GREEN}]}y{[reset]} = {[${BLUE}]}sin{[reset]}({[${GREEN}]}angle{[reset]}) * {[${GREEN}]}distance{[reset]};
+
+        {[${PURPLE}]}return{[reset]} [{[${GREEN}]}x, y{[reset]}];
+    {[${RED}]}}
+
+    {[${GOLD}]}function{[reset]} {[${BLUE}]}offset_pos{[reset]}({[${GREEN}]}x1, y1, x2, y2{[reset]})
+    {[${RED}]}{
+        {[${PURPLE}]}let {[${GREEN}]}x{[reset]} = {[${GREEN}]}x1 {[reset]}+ {[${GREEN}]}x2{[reset]};
+        {[${PURPLE}]}let {[${GREEN}]}y{[reset]} = {[${GREEN}]}y1 {[reset]}+ {[${GREEN}]}y2{[reset]};
+        
+        {[${PURPLE}]}return{[reset]} [{[${GREEN}]}x, y{[reset]}];
+    {[${RED}]}}
+`;
+
+    write_multiline_text(algorithm, text_size, canvas.height/2, text_size/4, WHITE, "left")
+
+    draw_image(Final, canvas.width/2 + text_size*3, canvas.height/2.25+ text_size, text_size*2.5);
+
+    ctx.restore()
+}
+
+const part1 = [promise_to_audience, slide_0, slide_1, meaning_introduction, niga_0, niga_1, niga_2, niga_pre_final, meaning_conclusion];
+const part2 = [introduction,function_intro,function_1,function_2,desired_output,simple_algorithm_initial,simple_algorithm_only_rotate,RotatePoint_Initial,RotatePoint_Final,OffsetPos_Initial,OffsetPos_Final,simple_algorithm_ready,simple_algorithm_main_func,simple_algorithm_final,desired_output,conclusion];
+const end = [endf];
+
+const slides = [].concat(part1).concat(part2).concat(end);
 
 function draw(){
     ctx.canvas.width  = window.innerWidth;
